@@ -73,7 +73,7 @@ class JudgesAppealsCog(commands.Cog):
 
             seconds = await calc_time(time, now_time)
 
-            if seconds >= 10:
+            if seconds >= 259200: # 3 days
                 await update_time(int(judge_id), int(appeal))
                 channel = self.bot.get_channel(int(appeal))
                 await channel.send(f"Пинг судьи <@{int(judge_id)}> (Не было сообщений от судьи более 3-ёх дней)")
