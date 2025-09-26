@@ -7,9 +7,11 @@ import discord
 from discord.ext import commands
 
 if "cogs" in __name__:
-    from .data.appeals import save_data, remove_data, check_appeal, get_all_appeals, get_judge, save_msg_time, get_msg_time
+    from .data.appeals import (save_data, remove_data, check_appeal, get_judge, 
+        get_all_appeals, calc_time, update_time, get_time)
 else:
-    from data.appeals import save_data, remove_data, check_appeal, get_all_appeals, get_judge, save_msg_time, get_msg_time
+    from data.appeals import (save_data, remove_data, check_appeal, get_judge, 
+        get_all_appeals, calc_time, update_time, get_time)
 
 with open(f"{os.path.dirname(__file__)}/config/config.json", "r", encoding="utf-8") as f:
     cfg = json.load(f)
@@ -47,41 +49,31 @@ class JudgesAppealsCog(commands.Cog):
             await ctx.respond("Данное обжалование ещё не принято", ephemeral=True)
             return
 
-        await remove_data(ctx.author.id, ctx.channel_id) # Удаляем данные из json
-
+        await remove_data(ctx.author.id, ctx.channel_id)
+        thread = self.bot.get_channel(ctx.channel_id)
         await ctx.respond(f"Обжалование было закрыто судьёй <@{ctx.author.id}>")
+
+        await thread.edit(archived=True, locked=True)
     
     @commands.Cog.listener()
     async def on_message(self, message):
         if (message.author.id == self.bot.user.id): return
+        
+        all_appeals = await get_all_appeals()
+        
+        for appeal in all_appeals:
+            judge_id = await get_judge(appeal)
+            if message.channel.id == appeal:
+                if message.author.id == int(judge_id):
+                    await update_time(int(judge_id), int(appeal))
 
-        try:
-            appeals = await get_all_appeals()
+            time = await get_time(int(judge_id), int(appeal))
+            now = datetime.datetime.now()
+            now_time = now.strftime("%m.%Y.%H.%M.%S")
 
-            for appeal_id in appeals:
-                channel = self.bot.get_channel(appeal_id)
-                author = await get_judge(appeal_id)
+            seconds = await calc_time(time, now_time)
 
-                if (author == True):
-                    return
-
-                last_message_time = ""
-
-                async for message in channel.history(limit=None):
-                    if (message.author.id == int(author)):
-                        last_message_time = message.created_at
-                        break
-                
-                now = datetime.datetime.now()
-                form_last_message_time = last_message_time.strftime('%Y-%m-%d %H:%M:%S.%f')
-                form_last_message_time = datetime.datetime.fromisoformat(form_last_message_time)
-
-                time_difference = now - form_last_message_time  # Разница во времени
-                days = time_difference.seconds  # Получаем количество дней
-
-                if (days >= 1):
-                    channel = self.bot.get_channel(appeal_id)
-                    await channel.send(f"Пинг судьи <@{author}> (Не было сообщений от судьи более 3-ёх дней)")
-
-        except Exception as e:
-            logging.error(e)
+            if seconds >= 10:
+                await update_time(int(judge_id), int(appeal))
+                channel = self.bot.get_channel(int(appeal))
+                await channel.send(f"Пинг судьи <@{int(judge_id)}> (Не было сообщений от судьи более 3-ёх дней)")
