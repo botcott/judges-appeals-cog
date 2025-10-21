@@ -82,7 +82,7 @@ class JudgesAppealsCog(commands.Cog):
             open_count = len(appeal_info["open_appeals"])
             closed_count = len(appeal_info["closed_appeals"])
 
-            answer = discord.Embed(title=f"{member.name} | Обжалования", colour=0x41f096)
+            answer = discord.Embed(title=f"Обжалования {member.name}", colour=0x41f096)
 
             answer.add_field(name="Общее количество", inline=False,
                 value=f"{await form(closed_count+open_count)}"
@@ -94,7 +94,7 @@ class JudgesAppealsCog(commands.Cog):
                 value=f"{await form(closed_count)}"
             )
 
-            await ctx.respond(embed=answer)
+            await ctx.respond(embed=answer, ephemeral=True)
         else:
             await ctx.respond(f"Информация о {member.name} не найдена", ephemeral=True)
     
