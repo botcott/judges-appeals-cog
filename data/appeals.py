@@ -9,7 +9,7 @@ async def save_data(judge_id: int, appeal_id: int, filename = f"{os.path.dirname
         try:
             with open(filename, "r") as f:
                 data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except Exception:
             data = {}
 
     judge_id = str(judge_id)
@@ -31,46 +31,54 @@ async def save_data(judge_id: int, appeal_id: int, filename = f"{os.path.dirname
     with open(filename, "w") as f:
         json.dump(data, f, indent=4)
 
-async def remove_data(judge_id: int, appeal_id: int, filename = f"{os.path.dirname(__file__)}/appeals.json") -> None:
+async def remove_data(judge_id: int, appeal_id: int, filename=f"{os.path.dirname(__file__)}/appeals.json") -> None:
     if not os.path.exists(filename):
         logging.info(f"Файл {filename} не существует.")
         return
 
     try:
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        logging.error(f"Ошибка: Файл пуст.")
+    except Exception as e:
+        logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Ошибка: {e}")
         return
 
-    judge_id = str(judge_id)
+    judge_id_str = str(judge_id)
 
-    if judge_id not in data:
+    if judge_id_str not in data:
         logging.warning(f"Предупреждение: judge_id {judge_id} не найден в файле {filename}.")
         return
 
-    if "appeals" in data[judge_id] and "appeals" in data[judge_id]["appeals"] and "appeals" in data[judge_id]["appeals"] and isinstance(data[judge_id]["appeals"]["appeals"], list):
+    if not ("appeals" in data[judge_id_str] and isinstance(data[judge_id_str]["appeals"], dict) and
+            "appeals" in data[judge_id_str]["appeals"] and isinstance(data[judge_id_str]["appeals"]["appeals"], list)):
+        return
+    
+    try:
+        appeal_index = data[judge_id_str]["appeals"]["appeals"].index(appeal_id)
 
-        try:
-            appeal_index = data[judge_id]["appeals"]["appeals"].index(appeal_id) 
+        removed_appeal = data[judge_id_str]["appeals"]["appeals"].pop(appeal_index)
+        removed_appeal_time = data[judge_id_str]["appeals"]["message_time"].pop(appeal_index)
+        
+        now = datetime.datetime.now()
+        closing_time = now.strftime("%m.%Y.%H.%M.%S")
 
-            del data[judge_id]["appeals"]["appeals"][appeal_index]
-            del data[judge_id]["appeals"]["message_time"][appeal_index]
+        if "closed_appeals" not in data[judge_id_str]:
+            data[judge_id_str]["closed_appeals"] = {
+                "appeals": [],
+                "closed_appeals_time": []
+            }
 
-            logging.info(f"appeal_id {appeal_id} закрыт")
+        data[judge_id_str]["closed_appeals"]["appeals"].append(removed_appeal)
+        data[judge_id_str]["closed_appeals"]["closed_appeals_time"].append(closing_time)
 
-            if not data[judge_id]["appeals"]["appeals"]:
-                del data[judge_id]
-                logging.info(f"judge_id {judge_id} удален, так как список appeal_id стал пустым.")
+        logging.info(f"appeal_id {appeal_id} перемещен в closed_appeals")
 
-        except ValueError:
-            logging.warning(f"Предупреждение: appeal_id {appeal_id} не найден")
-    else:
-        logging.warning(f"Предупреждение: Неправильная структура данных")
+    except ValueError:
+        logging.warning(f"Предупреждение: appeal_id {appeal_id} не найден")
 
     try:
-        with open(filename, "w") as f:
-            json.dump(data, f, indent=4)
+        with open(filename, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
     except IOError as e:
         logging.error(f"Ошибка: Не удалось записать данные в файл {filename}: {e}")
 
@@ -82,18 +90,16 @@ async def check_appeal(appeal_id: int, filename = f"{os.path.dirname(__file__)}/
     try:
         with open(filename, "r") as f:
             data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+    except Exception:
         logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Считаем, что appeal_id не найден.")
         return False
 
     for judge_id, judge_data in data.items():
-        if isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list):  # Проверяем структуру
+        if isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list):
             if appeal_id in judge_data["appeals"]["appeals"]:
                 return True
-        else:
-            logging.warning(f"Неправильная структура данных")
 
-    logging.info(f"appeal_id {appeal_id} принят {judge_id}")
+    logging.info(f"appeal_id {appeal_id} принят")
     return False
 
 async def get_judge(appeal_id: int, filename = f"{os.path.dirname(__file__)}/appeals.json") -> bool | int | str:
@@ -104,18 +110,16 @@ async def get_judge(appeal_id: int, filename = f"{os.path.dirname(__file__)}/app
     try:
         with open(filename, "r") as f:
             data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+    except Exception:
         logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Считаем, что appeal_id не найден.")
         return False
 
     for judge_id, judge_data in data.items():
-        if isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list):  # Проверяем структуру
+        if isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list):
             if appeal_id in judge_data["appeals"]["appeals"]:
                 return judge_id
-        else:
-            logging.warning(f"Неправильная структура данных")
 
-    logging.info(f"appeal_id {appeal_id} принят {judge_id}")
+    logging.info(f"appeal_id {appeal_id} принят")
     return False
 
 async def get_all_appeals(filename=f"{os.path.dirname(__file__)}/appeals.json") -> list:
@@ -127,7 +131,7 @@ async def get_all_appeals(filename=f"{os.path.dirname(__file__)}/appeals.json") 
     try:
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    except Exception as e:
         logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Ошибка: {e}")
         return appeal_ids
 
@@ -158,7 +162,7 @@ async def update_time(judge_id: int, appeal_id: int, filename=f"{os.path.dirname
     try:
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    except Exception as e:
         logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Ошибка: {e}")
         return False
 
@@ -198,7 +202,7 @@ async def get_time(judge_id: int, appeal_id: int, filename=f"{os.path.dirname(__
     try:
         with open(filename, "r", encoding="utf-8") as f:
             data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    except Exception as e:
         logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Ошибка: {e}")
         return None
 
