@@ -6,7 +6,7 @@ import datetime
 import discord
 from discord.ext import commands
 
-from data.appeals import (save_data, remove_data, check_appeal, get_judge, 
+from .data.appeals import (save_data, remove_data, check_appeal, get_judge, 
     get_all_appeals, calc_time, update_time, get_time, get_appeals_info)
 
 with open(f"{os.path.dirname(__file__)}/config/config.json", "r", encoding="utf-8") as f:
@@ -38,6 +38,12 @@ class JudgesAppealsCog(commands.Cog):
             await ctx.respond("Данное обжалование уже принято", ephemeral=True)
             return
 
+        thread = self.bot.get_channel(ctx.channel_id)
+        
+        if (thread.locked == True):
+            await ctx.respond(f"Данное обжалование закрыто", ephemeral=True)
+            return
+
         await save_data(ctx.author.id, ctx.channel_id)
 
         await ctx.respond(f"Обжалование принято судьёй <@{ctx.author.id}>")
@@ -52,9 +58,14 @@ class JudgesAppealsCog(commands.Cog):
         if (await check_appeal(ctx.channel_id) == False):
             await ctx.respond("Данное обжалование ещё не принято", ephemeral=True)
             return
+        
+        thread = self.bot.get_channel(ctx.channel_id)
+
+        if (thread.locked == True):
+            await ctx.respond(f"Данное обжалование закрыто", ephemeral=True)
+            return
 
         await remove_data(ctx.author.id, ctx.channel_id)
-        thread = self.bot.get_channel(ctx.channel_id)
         await ctx.respond(f"Обжалование было закрыто судьёй <@{ctx.author.id}>")
 
         await thread.edit(archived=True, locked=True)
