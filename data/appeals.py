@@ -5,7 +5,7 @@ import datetime
 
 async def save_data(judge_id: int, appeal_id: int, filename = f"{os.path.dirname(__file__)}/appeals.json") -> None:
     data = {}
-    if os.path.exists(filename):
+    if (os.path.exists(filename)):
         try:
             with open(filename, "r") as f:
                 data = json.load(f)
@@ -17,9 +17,9 @@ async def save_data(judge_id: int, appeal_id: int, filename = f"{os.path.dirname
     now = datetime.datetime.now()
     time = now.strftime("%m.%Y.%H.%M.%S")
 
-    if judge_id in data:
-        if "appeals" in data[judge_id] and "appeals" in data[judge_id]["appeals"] and isinstance(data[judge_id]["appeals"]["appeals"], list):
-            if appeal_id not in data[judge_id]["appeals"]["appeals"]:
+    if (judge_id in data):
+        if ("appeals" in data[judge_id] and "appeals" in data[judge_id]["appeals"] and isinstance(data[judge_id]["appeals"]["appeals"], list)):
+            if (appeal_id not in data[judge_id]["appeals"]["appeals"]):
                 data[judge_id]["appeals"]["appeals"].append(appeal_id)
                 data[judge_id]["appeals"]["message_time"].append(time)
 
@@ -32,7 +32,7 @@ async def save_data(judge_id: int, appeal_id: int, filename = f"{os.path.dirname
         json.dump(data, f, indent=4)
 
 async def remove_data(judge_id: int, appeal_id: int, filename=f"{os.path.dirname(__file__)}/appeals.json") -> None:
-    if not os.path.exists(filename):
+    if (not os.path.exists(filename)):
         logging.info(f"Файл {filename} не существует.")
         return
 
@@ -45,11 +45,11 @@ async def remove_data(judge_id: int, appeal_id: int, filename=f"{os.path.dirname
 
     judge_id_str = str(judge_id)
 
-    if judge_id_str not in data:
+    if (judge_id_str not in data):
         logging.warning(f"Предупреждение: judge_id {judge_id} не найден в файле {filename}.")
         return
 
-    if not ("appeals" in data[judge_id_str] and isinstance(data[judge_id_str]["appeals"], dict) and
+    if (not "appeals" in data[judge_id_str] and isinstance(data[judge_id_str]["appeals"], dict) and
             "appeals" in data[judge_id_str]["appeals"] and isinstance(data[judge_id_str]["appeals"]["appeals"], list)):
         return
     
@@ -83,7 +83,7 @@ async def remove_data(judge_id: int, appeal_id: int, filename=f"{os.path.dirname
         logging.error(f"Ошибка: Не удалось записать данные в файл {filename}: {e}")
 
 async def check_appeal(appeal_id: int, filename = f"{os.path.dirname(__file__)}/appeals.json") -> bool:
-    if not os.path.exists(filename):
+    if (not os.path.exists(filename)):
         logging.info(f"Файл {filename} не существует.")
         return False
 
@@ -94,15 +94,15 @@ async def check_appeal(appeal_id: int, filename = f"{os.path.dirname(__file__)}/
         return False
 
     for judge_id, judge_data in data.items():
-        if isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list):
-            if appeal_id in judge_data["appeals"]["appeals"]:
+        if (isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list)):
+            if (appeal_id in judge_data["appeals"]["appeals"]):
                 return True
 
     logging.info(f"appeal_id {appeal_id} принят")
     return False
 
 async def get_judge(appeal_id: int, filename = f"{os.path.dirname(__file__)}/appeals.json") -> bool | int | str:
-    if not os.path.exists(filename):
+    if (not os.path.exists(filename)):
         logging.info(f"Файл {filename} не существует.")
         return False
 
@@ -113,8 +113,8 @@ async def get_judge(appeal_id: int, filename = f"{os.path.dirname(__file__)}/app
         return False
 
     for judge_id, judge_data in data.items():
-        if isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list):
-            if appeal_id in judge_data["appeals"]["appeals"]:
+        if (isinstance(judge_data, dict) and "appeals" in judge_data and "appeals" in judge_data["appeals"] and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list)):
+            if (appeal_id in judge_data["appeals"]["appeals"]):
                 return judge_id
 
     logging.info(f"appeal_id {appeal_id} принят")
@@ -122,7 +122,7 @@ async def get_judge(appeal_id: int, filename = f"{os.path.dirname(__file__)}/app
 
 async def get_all_appeals(filename=f"{os.path.dirname(__file__)}/appeals.json") -> list:
     appeal_ids = []
-    if not os.path.exists(filename):
+    if (not os.path.exists(filename)):
         logging.info(f"Файл {filename} не существует.")
         return appeal_ids
 
@@ -134,9 +134,9 @@ async def get_all_appeals(filename=f"{os.path.dirname(__file__)}/appeals.json") 
         return appeal_ids
 
     for judge_id, judge_data in data.items():
-        if isinstance(judge_data, dict) and "appeals" in judge_data and isinstance(judge_data["appeals"], dict) and "appeals" in judge_data["appeals"]:
+        if (isinstance(judge_data, dict) and "appeals" in judge_data and isinstance(judge_data["appeals"], dict) and "appeals" in judge_data["appeals"]):
             appeals_list = judge_data["appeals"]["appeals"]
-            if isinstance(appeals_list, list):
+            if (isinstance(appeals_list, list)):
                 appeal_ids.extend(appeals_list)
             else:
                 logging.warning(f"Неожиданный формат данных для judge_id {judge_id}. 'appeals' должен быть списком.")
@@ -166,9 +166,9 @@ async def update_time(judge_id: int, appeal_id: int, filename=f"{os.path.dirname
 
     judge_id_str = str(judge_id)
 
-    if judge_id_str in data:
+    if (judge_id_str in data):
         appeals_data = data[judge_id_str]["appeals"]
-        if "appeals" in appeals_data and "message_time" in appeals_data:
+        if ("appeals" in appeals_data and "message_time" in appeals_data):
             appeals_list = appeals_data["appeals"]
             time_list = appeals_data["message_time"]
 
@@ -206,9 +206,9 @@ async def get_time(judge_id: int, appeal_id: int, filename=f"{os.path.dirname(__
 
     judge_id_str = str(judge_id)
 
-    if judge_id_str in data:
+    if (judge_id_str in data):
         appeals_data = data[judge_id_str]["appeals"]
-        if "appeals" in appeals_data and "message_time" in appeals_data:
+        if ("appeals" in appeals_data and "message_time" in appeals_data):
             appeals_list = appeals_data["appeals"]
             time_list = appeals_data["message_time"]
 
@@ -223,3 +223,34 @@ async def get_time(judge_id: int, appeal_id: int, filename=f"{os.path.dirname(__
     else:
         logging.error(f"Ошибка: judge_id {judge_id} не найден в JSON.")
         return None
+
+async def get_appeals_info(judge_id: int, filename=f"{os.path.dirname(__file__)}/appeals.json") -> dict:
+    if (not os.path.exists(filename)):
+        logging.error(f"Файл {filename} не существует.")
+        return None
+
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Ошибка: {e}")
+        return None
+
+    judge_id_str = str(judge_id)
+    if (judge_id_str not in data):
+        return None
+
+    judge_data = data[judge_id_str]
+    open_appeals = []
+    closed_appeals = []
+
+    if ("appeals" in judge_data and isinstance(judge_data["appeals"], dict) and "appeals" in judge_data["appeals"] and isinstance(judge_data["appeals"]["appeals"], list)):
+        open_appeals = judge_data["appeals"]["appeals"]
+
+    if ("closed_appeals" in judge_data and isinstance(judge_data["closed_appeals"], dict) and "appeals" in judge_data["closed_appeals"] and isinstance(judge_data["closed_appeals"]["appeals"], list)):
+        closed_appeals = judge_data["closed_appeals"]["appeals"]
+
+    return {
+        "open_appeals": open_appeals,
+        "closed_appeals": closed_appeals
+    }
