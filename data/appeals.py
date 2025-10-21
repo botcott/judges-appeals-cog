@@ -58,7 +58,7 @@ async def remove_data(judge_id: int, appeal_id: int, filename=f"{os.path.dirname
 
         removed_appeal = data[judge_id_str]["appeals"]["appeals"].pop(appeal_index)
         removed_appeal_time = data[judge_id_str]["appeals"]["message_time"].pop(appeal_index)
-        
+
         now = datetime.datetime.now()
         closing_time = now.strftime("%m.%Y.%H.%M.%S")
 
@@ -91,7 +91,6 @@ async def check_appeal(appeal_id: int, filename = f"{os.path.dirname(__file__)}/
         with open(filename, "r") as f:
             data = json.load(f)
     except Exception:
-        logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Считаем, что appeal_id не найден.")
         return False
 
     for judge_id, judge_data in data.items():
@@ -111,7 +110,6 @@ async def get_judge(appeal_id: int, filename = f"{os.path.dirname(__file__)}/app
         with open(filename, "r") as f:
             data = json.load(f)
     except Exception:
-        logging.error(f"Ошибка: Не удалось загрузить JSON из файла {filename}. Файл может быть поврежден или отсутствует. Считаем, что appeal_id не найден.")
         return False
 
     for judge_id, judge_data in data.items():
