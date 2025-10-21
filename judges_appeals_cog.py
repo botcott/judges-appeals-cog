@@ -18,7 +18,7 @@ async def form(count) -> str:
     if count % 10 == 1 and count % 100 != 11:
         return f"Был найдено {count} обжалование"
     elif 2 <= count % 10 <= 4 and (count % 100 < 10 or count % 100 >= 20):
-        return f"Было найдено {count} обжалований"
+        return f"Было найдено {count} обжалования"
     else:
         return f"Было найдено {count} обжалований"
 
